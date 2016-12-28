@@ -30,6 +30,8 @@ class CCAvenue_Lib{
 	private $merchant_id = null; //Shared by CCAVENUES
 	private $access_code = null; //Shared by CCAVENUES
 	private $working_key = null; //Shared by CCAVENUES
+	private $redirect_url = null;
+	private $cancel_url = null; 
 	
 	public function __construct($params = array()){
 		$this->CI =& get_instance();
@@ -41,6 +43,8 @@ class CCAvenue_Lib{
 		$this->merchant_id = $params['merchant_id'];
 		$this->access_code = $params['access_code'];
 		$this->working_key = $params['working_key'];
+		$this->redirect_url = $params['redirect_url'];
+		$this->cancel_url = $params['cancel_url'];
 		return true;
 	}
 	
@@ -71,10 +75,22 @@ class CCAvenue_Lib{
 		return $decryptedText;
 	}
 	
-	public function ccavenueRequestHandler(){
+	public function ccavenueRequestHandler($tempData){
 		$merchant_data = '';
 		
-		foreach($_POST as $key=>$value){
+		$data = array(
+			'tid' => time(),
+			'merchant_id' => $this->merchant_id,
+			'order_id' => ((isset($tempData['order_id']) && !empty($tempData['order_id'])) ? $tempData['order_id'] : 111111111),
+			'amount' => ((isset($tempData['amount']) && !empty($tempData['amount'])) ? $tempData['amount'] : '1.00'),
+			'currency' => ((isset($tempData['currency']) && !empty($tempData['currency'])) ? $tempData['currency'] : 'INR'),
+			'redirect_url' => $this->redirect_url,
+			'cancel_url' => $this->cancel_url,
+			'language' => (isset($data['language']) && !empty($data['language'])) ? $data['language'] : 'EN',
+			'submit' => 'CheckOut'
+		);
+		
+		foreach($data as $key=>$value){
 			$merchant_data .= $key . '=' . urlencode($value) . '&';
 		}
 		
@@ -88,7 +104,7 @@ class CCAvenue_Lib{
 				</head>
 				<body>
 					<center>
-						<form method='post' name='redirect' action='https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction'>
+						<form method='post' name='redirect' action='https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'>
 							<input type='hidden' name='encRequest' value='{$encrypted_data}' />
 							<input type='hidden' name='access_code' value='{$this->access_code}' />
 						</form>
