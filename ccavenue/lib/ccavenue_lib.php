@@ -38,17 +38,13 @@ class CCAvenue_Lib{
 		$this->CI->config->item('base_url');
 		$this->CI->load->database();
 		
-		if(!isset($params['merchant_id'], $params['access_code'], $params['working_key'])){
-			return false;
-		}
-		
 		$this->merchant_id = $params['merchant_id'];
 		$this->access_code = $params['access_code'];
 		$this->working_key = $params['working_key'];
 		return true;
 	}
 	
-	public function encrypt($plainText, $key){
+	private function encrypt($plainText, $key){
 		$secretKey = $this->hextobin(md5($key));
 		$initVector = pack("C*", 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f);
 		$openMode = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', 'cbc', '');
@@ -63,7 +59,7 @@ class CCAvenue_Lib{
 		return bin2hex($encryptedText);
 	}
 	
-	public function decrypt($encryptedText, $key){
+	private function decrypt($encryptedText, $key){
 		$secretKey = $this->hextobin(md5($key));
 		$initVector = pack("C*", 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f);
 		$encryptedText = $this->hextobin($encryptedText);
@@ -100,6 +96,49 @@ class CCAvenue_Lib{
 					<script language='javascript'>document.redirect.submit();</script>
 				</body>
 			</html>
+		";
+	}
+	
+	public function ccavenueResponseHandler(){
+		$encResponse = $_POST["encResp"]; // Response sent by the CCAvenue Server
+		$rcvdString = $this->decrypt($encResponse, $this->working_key); // decrypt the data
+		
+		$order_status = "";
+		$decryptValues = explode('&', $rcvdString);
+		$dataSize = sizeof($decryptValues);
+		
+		$printData = '';
+		for($i=0; $i<$dataSize; $i++){
+			$information = explode('=', $decryptValues[$i]);
+			
+			if($i == 3){
+				$order_status = $information[1];
+			}
+			
+			$printData .= "<tr>
+				<td>{$information[0]}</td>
+				<td>".urldecode($information[1])."</td>
+			</tr>";
+		}
+		
+		if($order_status === "Success"){
+			$message = "Thank you for shopping with us. Your credit card has been charged and your transaction is successful. We will be shipping your order to you soon.";
+		}else if($order_status === "Aborted"){
+			$message = "Thank you for shopping with us.We will keep you posted regarding the status of your order through e-mail";
+		}else if($order_status === "Failure"){
+			$message = "Thank you for shopping with us.However,the transaction has been declined.";
+		}else{
+			$message = "Security Error. Illegal access detected";
+		}
+		
+		return "
+			<center>
+				<br />{$message}<br /><br />
+				<table cellspacing='4' cellpadding='4'>
+					{$printData}
+				</table>
+				<br />
+			</center>
 		";
 	}
 	
