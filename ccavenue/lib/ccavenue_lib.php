@@ -27,6 +27,9 @@
  
 class CCAvenue_Lib{
 	var $CI;
+	private $merchant_id = null; //Shared by CCAVENUES
+	private $access_code = null; //Shared by CCAVENUES
+	private $working_key = null; //Shared by CCAVENUES
 	
 	public function __construct($params = array()){
 		$this->CI =& get_instance();
@@ -34,6 +37,15 @@ class CCAvenue_Lib{
 		$this->CI->load->helper('url');
 		$this->CI->config->item('base_url');
 		$this->CI->load->database();
+		
+		if(!isset($params['merchant_id'], $params['access_code'], $params['working_key'])){
+			return false;
+		}
+		
+		$this->merchant_id = $params['merchant_id'];
+		$this->access_code = $params['access_code'];
+		$this->working_key = $params['working_key'];
+		return true;
 	}
 	
 	public function encrypt($plainText, $key){
@@ -61,6 +73,34 @@ class CCAvenue_Lib{
 		$decryptedText = rtrim($decryptedText, "\0");
 		mcrypt_generic_deinit($openMode);
 		return $decryptedText;
+	}
+	
+	public function ccavenueRequestHandler(){
+		$merchant_data = '';
+		
+		foreach($_POST as $key=>$value){
+			$merchant_data .= $key . '=' . urlencode($value) . '&';
+		}
+		
+		// encrypt the data
+		$encrypted_data = $this->encrypt($merchant_data, $this->working_key);
+		
+		return "
+			<html>
+				<head>
+					<title>CC Avenue Handler</title>
+				</head>
+				<body>
+					<center>
+						<form method='post' name='redirect' action='https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction'>
+							<input type='hidden' name='encRequest' value='{$encrypted_data}' />
+							<input type='hidden' name='access_code' value='{$this->access_code}' />
+						</form>
+					</center>
+					<script language='javascript'>document.redirect.submit();</script>
+				</body>
+			</html>
+		";
 	}
 	
 	//*********** Padding Function *********************//
