@@ -3,6 +3,11 @@
 
 copy lib/ccavenue_lib.php into the application/libraries folder
 
-add the "ccavenue_lib" into the $autoload['libraries'] in the application/config/autoload.php
-
-import the library using: $this->load->library('ccavenue_lib');
+import the library using:
+// DATA will be from the CCAVENUE account
+$params = array(
+  'merchant_id' => 'abc',
+  'access_code' => 'mno',
+  'working_key' => 'xyz',
+);
+$this->load->library('ccavenue_lib', $params);
