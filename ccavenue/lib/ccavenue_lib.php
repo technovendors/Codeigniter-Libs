@@ -81,7 +81,7 @@ class CCAvenue_Lib{
 		$data = array(
 			'tid' => time(),
 			'merchant_id' => $this->merchant_id,
-			'order_id' => ((isset($tempData['order_id']) && !empty($tempData['order_id'])) ? $tempData['order_id'] : 111111111),
+			'order_id' => ((isset($tempData['order_id']) && !empty($tempData['order_id'])) ? $tempData['order_id'] : 000001),
 			'amount' => ((isset($tempData['amount']) && !empty($tempData['amount'])) ? $tempData['amount'] : '1.00'),
 			'currency' => ((isset($tempData['currency']) && !empty($tempData['currency'])) ? $tempData['currency'] : 'INR'),
 			'redirect_url' => $this->redirect_url,
